@@ -1,10 +1,16 @@
 [package]
 name = "deezer"
+description = "Provides a rust implementation of the Deezer Api"
 version = "0.1.0"
 authors = ["Max Jöhnk <maxjoehnk@gmail.com>"]
 edition = "2018"
+repository = "https://github.com/maxjoehnk/deezer-rs"
+license = "MIT"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[badges]
+is-it-maintained-issue-resolution = { repository = "https://github.com/maxjoehnk/soundcloud-rs" }
+is-it-maintained-open-issues = { repository = "https://github.com/maxjoehnk/soundcloud-rs" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 reqwest = { version = "0.10", features = ["json"] }
