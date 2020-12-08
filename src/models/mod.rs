@@ -1,6 +1,6 @@
 //! Contains all api objects
+#![warn(missing_docs)]
 use async_trait::async_trait;
-#[warn(missing_docs)]
 use serde::{Deserialize, Serialize};
 
 use crate::DeezerClient;

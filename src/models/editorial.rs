@@ -1,6 +1,6 @@
 //! [Editorial API](https://developers.deezer.com/api/editorial)
+#![warn(missing_docs)]
 use crate::models::{DeezerEnumerable, DeezerObject};
-#[warn(missing_docs)]
 use serde::{Deserialize, Serialize};
 
 /// Contains all the information provided for an Editorial.

@@ -1,5 +1,5 @@
 //! [Options API](https://developers.deezer.com/api/options)
-#[warn(missing_docs)]
+#![warn(missing_docs)]
 use serde::{Deserialize, Serialize};
 
 /// Contains all the information provided for a user's Options.

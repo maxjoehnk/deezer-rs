@@ -1,5 +1,5 @@
 //! [Chart API](https://developers.deezer.com/api/chart)
-#[warn(missing_docs)]
+#![warn(missing_docs)]
 use crate::models::{Album, Artist, DeezerArray, DeezerObject, Playlist, PlaylistUser, Track};
 use crate::Result;
 use serde::{Deserialize, Serialize};

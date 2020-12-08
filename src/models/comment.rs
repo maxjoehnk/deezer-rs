@@ -1,5 +1,5 @@
 //! [Comment API](https://developers.deezer.com/api/comment)
-#[warn(missing_docs)]
+#![warn(missing_docs)]
 use crate::models::{DeezerObject, User};
 use crate::Result;
 use serde::{Deserialize, Serialize};

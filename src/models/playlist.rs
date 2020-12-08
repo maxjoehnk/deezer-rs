@@ -1,7 +1,7 @@
 //! [Playlists API](https://developers.deezer.com/api/playlists)
+#![warn(missing_docs)]
 use crate::models::{Album, Artist, DeezerArray, DeezerObject, Track, User};
 use crate::Result;
-#[warn(missing_docs)]
 use serde::{Deserialize, Serialize};
 
 /// Contains all the information provided for a Playlist.

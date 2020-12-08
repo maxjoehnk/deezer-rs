@@ -1,6 +1,6 @@
 //! [Radio API](https://developers.deezer.com/api/radio)
+#![warn(missing_docs)]
 use crate::models::{DeezerEnumerable, DeezerObject};
-#[warn(missing_docs)]
 use serde::{Deserialize, Serialize};
 
 /// Contains all the information provided for a Radio.

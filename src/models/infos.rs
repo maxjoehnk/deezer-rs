@@ -1,5 +1,5 @@
 //! [Infos API](https://developers.deezer.com/api/infos)
-#[warn(missing_docs)]
+#![warn(missing_docs)]
 use serde::{Deserialize, Serialize};
 
 /// Contains all the information about the API in the current country.

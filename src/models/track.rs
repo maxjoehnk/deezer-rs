@@ -1,5 +1,5 @@
 //! [Track API](https://developers.deezer.com/api/track)
-#[warn(missing_docs)]
+#![warn(missing_docs)]
 use serde::{Deserialize, Serialize};
 
 use crate::models::{Album, Artist, ContributorArtist, DeezerObject};

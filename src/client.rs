@@ -1,4 +1,4 @@
-#[warn(missing_docs)]
+#![warn(missing_docs)]
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 

@@ -1,4 +1,4 @@
-#[warn(missing_docs)]
+#![warn(missing_docs)]
 use thiserror::Error;
 
 /// Every api which can fail will return a [`DeezerError`].

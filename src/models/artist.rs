@@ -1,5 +1,5 @@
 //! [Artist API](https://developers.deezer.com/api/artist)
-#[warn(missing_docs)]
+#![warn(missing_docs)]
 use crate::models::DeezerObject;
 use crate::Result;
 use serde::{Deserialize, Serialize};
