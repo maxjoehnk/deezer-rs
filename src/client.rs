@@ -1,4 +1,8 @@
 #![warn(missing_docs)]
+
+use std::collections::HashMap;
+
+use lazy_static::lazy_static;
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 
@@ -6,6 +10,9 @@ use crate::models::*;
 use crate::Result;
 
 const BASE_URL: &str = "https://api.deezer.com";
+lazy_static! {
+    static ref NO_PARAMS: HashMap<String, String> = HashMap::new();
+}
 
 /// Entrypoint to interact with all deezer apis
 #[derive(Debug, Clone)]
@@ -33,6 +40,14 @@ impl DeezerClient {
     /// [Deezer Api Documentation](https://developers.deezer.com/api/artist)
     pub async fn artist(&self, id: u64) -> Result<Option<Artist>> {
         self.get_entity(id).await
+    }
+
+    /// Returns the [`Album`] for Artist with the given id.
+    ///
+    /// [Deezer Api Documentation](https://developers.deezer.com/api/artist/albums)
+    pub async fn artist_albums(&self, id: u64, limit: Option<u32>,
+                               offset: Option<u32>) -> Result<Vec<ArtistAlbum>> {
+         self.get_subresource(id, limit, offset).await
     }
 
     /// Returns the [`Comment`] with the given id.
@@ -157,10 +172,32 @@ impl DeezerClient {
         Ok(res.data)
     }
 
-    async fn get<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
+    pub(crate) async fn get_subresource<T>(&self, id: u64, limit: Option<u32>,
+                                           offset: Option<u32>) -> Result<Vec<T>>
+        where
+            T: DeezerObject
+    {
+        let url = T::get_api_url(id);
+        let url = format!("{}/{}", BASE_URL, url);
+
+        let mut params: HashMap<String, String> = HashMap::new();
+        if let Some(_limit) = limit {
+            params.insert("limit".to_owned(), _limit.to_string());
+        }
+        if let Some(_offset) = offset {
+            params.insert("offset".to_owned(), _offset.to_string());
+        }
+
+        let res: DeezerArray<T> = self.get_with_params(&url, &params).await?;
+
+        Ok(res.data)
+    }
+
+    async fn get_with_params<T: DeserializeOwned>(&self, url: &str, query_params: &HashMap<String, String>) -> Result<T> {
         let res = self
             .client
             .get(url)
+            .query(query_params)
             .send()
             .await?
             .error_for_status()?
@@ -169,4 +206,9 @@ impl DeezerClient {
 
         Ok(res)
     }
+
+    async fn get<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
+        self.get_with_params(url, &NO_PARAMS).await
+    }
+
 }
