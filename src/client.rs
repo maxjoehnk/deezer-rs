@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use lazy_static::lazy_static;
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 
@@ -10,9 +9,6 @@ use crate::models::*;
 use crate::Result;
 
 const BASE_URL: &str = "https://api.deezer.com";
-lazy_static! {
-    static ref NO_PARAMS: HashMap<String, String> = HashMap::new();
-}
 
 /// Entrypoint to interact with all deezer apis
 #[derive(Debug, Clone)]
@@ -193,22 +189,30 @@ impl DeezerClient {
         Ok(res.data)
     }
 
-    async fn get_with_params<T: DeserializeOwned>(&self, url: &str, query_params: &HashMap<String, String>) -> Result<T> {
-        let res = self
+    async fn get_with_optional_params<T: DeserializeOwned>(&self, url: &str, query_params: Option<&HashMap<String, String>>) -> Result<T> {
+        let mut request_builder = self
             .client
-            .get(url)
-            .query(query_params)
-            .send()
-            .await?
-            .error_for_status()?
-            .json()
-            .await?;
+            .get(url);
+        if query_params.is_some() {
+            request_builder = request_builder.query(query_params.unwrap());
+        }
+        let res =
+            request_builder
+                .send()
+                .await?
+                .error_for_status()?
+                .json()
+                .await?;
 
         Ok(res)
     }
 
+    async fn get_with_params<T: DeserializeOwned>(&self, url: &str, query_params: &HashMap<String, String>) -> Result<T> {
+        self.get_with_optional_params(url, Some(query_params)).await
+    }
+
     async fn get<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
-        self.get_with_params(url, &NO_PARAMS).await
+        self.get_with_optional_params(url, None).await
     }
 
 }
