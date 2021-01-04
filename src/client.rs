@@ -177,11 +177,11 @@ impl DeezerClient {
         let url = format!("{}/{}", BASE_URL, url);
 
         let mut params: HashMap<String, String> = HashMap::new();
-        if let Some(_limit) = limit {
-            params.insert("limit".to_owned(), _limit.to_string());
+        if let Some(limit) = limit {
+            params.insert("limit".to_owned(), limit.to_string());
         }
-        if let Some(_offset) = offset {
-            params.insert("offset".to_owned(), _offset.to_string());
+        if let Some(offset) = offset {
+            params.insert("offset".to_owned(), offset.to_string());
         }
 
         let res: DeezerArray<T> = self.get_with_params(&url, &params).await?;
@@ -193,8 +193,8 @@ impl DeezerClient {
         let mut request_builder = self
             .client
             .get(url);
-        if query_params.is_some() {
-            request_builder = request_builder.query(query_params.unwrap());
+        if let Some(params) = query_params {
+            request_builder = request_builder.query(params);
         }
         let res =
             request_builder
