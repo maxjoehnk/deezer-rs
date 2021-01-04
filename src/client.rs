@@ -1,4 +1,7 @@
 #![warn(missing_docs)]
+
+use std::collections::HashMap;
+
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 
@@ -33,6 +36,14 @@ impl DeezerClient {
     /// [Deezer Api Documentation](https://developers.deezer.com/api/artist)
     pub async fn artist(&self, id: u64) -> Result<Option<Artist>> {
         self.get_entity(id).await
+    }
+
+    /// Returns the [`Album`] for Artist with the given id.
+    ///
+    /// [Deezer Api Documentation](https://developers.deezer.com/api/artist/albums)
+    pub async fn artist_albums(&self, id: u64, limit: Option<u32>,
+                               offset: Option<u32>) -> Result<Vec<ArtistAlbum>> {
+         self.get_subresource(id, limit, offset).await
     }
 
     /// Returns the [`Comment`] with the given id.
@@ -157,16 +168,51 @@ impl DeezerClient {
         Ok(res.data)
     }
 
-    async fn get<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
-        let res = self
+    pub(crate) async fn get_subresource<T>(&self, id: u64, limit: Option<u32>,
+                                           offset: Option<u32>) -> Result<Vec<T>>
+        where
+            T: DeezerObject
+    {
+        let url = T::get_api_url(id);
+        let url = format!("{}/{}", BASE_URL, url);
+
+        let mut params: HashMap<String, String> = HashMap::new();
+        if let Some(limit) = limit {
+            params.insert("limit".to_owned(), limit.to_string());
+        }
+        if let Some(offset) = offset {
+            params.insert("offset".to_owned(), offset.to_string());
+        }
+
+        let res: DeezerArray<T> = self.get_with_params(&url, &params).await?;
+
+        Ok(res.data)
+    }
+
+    async fn get_with_optional_params<T: DeserializeOwned>(&self, url: &str, query_params: Option<&HashMap<String, String>>) -> Result<T> {
+        let mut request_builder = self
             .client
-            .get(url)
-            .send()
-            .await?
-            .error_for_status()?
-            .json()
-            .await?;
+            .get(url);
+        if let Some(params) = query_params {
+            request_builder = request_builder.query(params);
+        }
+        let res =
+            request_builder
+                .send()
+                .await?
+                .error_for_status()?
+                .json()
+                .await?;
 
         Ok(res)
     }
+
+    async fn get_with_params<T: DeserializeOwned>(&self, url: &str, query_params: &HashMap<String, String>) -> Result<T> {
+        self.get_with_optional_params(url, Some(query_params)).await
+    }
+
+    async fn get<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
+        self.get_with_optional_params(url, None).await
+    }
+
 }
