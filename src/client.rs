@@ -31,6 +31,13 @@ impl DeezerClient {
         self.get_entity(id).await
     }
 
+    /// Returns the [`Album`] with the given upc.
+    ///
+    /// [Deezer Api Documentation](https://developers.deezer.com/api/album)
+    pub async fn album_by_upc(&self, upc: Upc) -> Result<Option<Album>> {
+        self.get_entity_by_upc(upc).await
+    }
+
     /// Returns the [`Artist`] with the given id.
     ///
     /// [Deezer Api Documentation](https://developers.deezer.com/api/artist)
@@ -140,13 +147,10 @@ impl DeezerClient {
         self.get(&url).await
     }
 
-    pub(crate) async fn get_entity<T>(&self, id: u64) -> Result<Option<T>>
-    where
-        T: DeezerObject,
+    pub(crate) async fn get_entity_from_url<T>(&self, url:String) -> Result<Option<T>>
+        where
+            T: DeserializeOwned,
     {
-        let url = T::get_api_url(id);
-        let url = format!("{}/{}", BASE_URL, url);
-
         let res = self.client.get(&url).send().await?;
         if res.status() == StatusCode::NOT_FOUND {
             return Ok(None);
@@ -154,6 +158,26 @@ impl DeezerClient {
         let body = res.error_for_status()?.json().await?;
 
         Ok(Some(body))
+    }
+
+    pub(crate) async fn get_entity<T>(&self, id: u64) -> Result<Option<T>>
+    where
+        T: DeezerObject,
+    {
+        let url = T::get_api_url(id);
+        let url = format!("{}/{}", BASE_URL, url);
+
+        self.get_entity_from_url(url).await
+    }
+
+    pub(crate) async fn get_entity_by_upc<T>(&self, upc: Upc) -> Result<Option<T>>
+        where
+            T: DeezerUpcObject,
+    {
+        let url = T::get_api_url(upc);
+        let url = format!("{}/{}", BASE_URL, url);
+
+        self.get_entity_from_url(url).await
     }
 
     pub(crate) async fn get_all<T>(&self) -> Result<Vec<T>>
