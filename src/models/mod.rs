@@ -96,6 +96,20 @@ pub trait DeezerObject: serde::de::DeserializeOwned {
     }
 }
 
+/// A by upc queryable api object of the deezer api
+#[async_trait]
+pub trait DeezerUpcObject: serde::de::DeserializeOwned {
+    /// Get a relative api url for the given `upc`
+    fn get_api_url(upc: Upc) -> String;
+
+    /// Fetch an api object with the given `upc`
+    async fn get_by_upc(upc: Upc) -> Result<Option<Self>> {
+        let client = DeezerClient::new();
+
+        client.get_entity_by_upc(upc).await
+    }
+}
+
 // Represents an api object which has a list method
 #[async_trait]
 pub trait DeezerEnumerable: DeezerObject {
@@ -107,3 +121,5 @@ pub trait DeezerEnumerable: DeezerObject {
         client.get_all().await
     }
 }
+
+pub type Upc = String;

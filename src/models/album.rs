@@ -1,8 +1,9 @@
 //! [Album API](https://developers.deezer.com/api/album)
 #![warn(missing_docs)]
+
 use serde::{Deserialize, Serialize};
 
-use crate::models::{Artist, ContributorArtist, DeezerArray, DeezerObject, Genre, Track};
+use crate::models::{Artist, ContributorArtist, DeezerArray, DeezerObject, DeezerUpcObject, Genre, Track, Upc};
 use crate::Result;
 
 /// Contains all the information provided for an Album.
@@ -130,6 +131,12 @@ pub struct Album {
 impl DeezerObject for Album {
     fn get_api_url(id: u64) -> String {
         format!("album/{}", id)
+    }
+}
+
+impl DeezerUpcObject for Album {
+    fn get_api_url(upc: Upc) -> String {
+        format!("album/upc:{}", upc)
     }
 }
 
