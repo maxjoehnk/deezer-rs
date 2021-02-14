@@ -35,7 +35,7 @@ use serde::{Deserialize, Serialize};
 /// # }
 ///
 /// ```
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Clone, Deserialize, Serialize, Debug)]
 pub struct Comment {
     /// The comment's Deezer id
     pub id: u64,
@@ -55,7 +55,7 @@ pub struct Comment {
 }
 
 impl DeezerObject for Comment {
-    fn get_api_url(id: u64) -> String {
+    fn get_by_id(id: u64) -> String {
         format!("comment/{}", id)
     }
 }
@@ -65,7 +65,7 @@ impl DeezerObject for Comment {
 /// Use [`get_full()`] for the corresponding [`User`] struct.
 ///
 /// [`get_full()`]: CommentAuthor::get_full
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Clone, Deserialize, Serialize, Debug)]
 pub struct CommentAuthor {
     /// The comment's Deezer id
     pub id: u64,
@@ -101,7 +101,7 @@ impl CommentAuthor {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Clone, Deserialize, Serialize, Debug)]
 struct CommentParent {
     id: String,
 

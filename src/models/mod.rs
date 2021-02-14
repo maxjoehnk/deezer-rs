@@ -30,6 +30,8 @@ pub use self::radio::*;
 pub use self::track::*;
 #[doc(inline)]
 pub use self::user::*;
+#[doc(inline)]
+pub use self::search::*;
 use std::ops::Deref;
 
 pub mod album;
@@ -44,6 +46,7 @@ pub mod playlist;
 pub mod radio;
 pub mod track;
 pub mod user;
+pub mod search;
 
 /// Wrapper around deezer array types
 ///
@@ -86,27 +89,13 @@ impl<T> IntoIterator for DeezerArray<T> {
 #[async_trait]
 pub trait DeezerObject: serde::de::DeserializeOwned {
     /// Get a relative api url for the given `id`
-    fn get_api_url(id: u64) -> String;
+    fn get_by_id(id: u64) -> String;
 
     /// Fetch an api object with the given `id`
     async fn get(id: u64) -> Result<Option<Self>> {
         let client = DeezerClient::new();
 
         client.get_entity(id).await
-    }
-}
-
-/// A by upc queryable api object of the deezer api
-#[async_trait]
-pub trait DeezerUpcObject: serde::de::DeserializeOwned {
-    /// Get a relative api url for the given `upc`
-    fn get_api_url(upc: Upc) -> String;
-
-    /// Fetch an api object with the given `upc`
-    async fn get_by_upc(upc: Upc) -> Result<Option<Self>> {
-        let client = DeezerClient::new();
-
-        client.get_entity_by_upc(upc).await
     }
 }
 
@@ -122,4 +111,8 @@ pub trait DeezerEnumerable: DeezerObject {
     }
 }
 
-pub type Upc = String;
+pub trait DeezerConnection<Child: serde::de::DeserializeOwned>: DeezerObject {
+    fn get_connection_url(identifier: &str) -> String;
+
+    fn get_url(&self) -> String;
+}

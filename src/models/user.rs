@@ -107,7 +107,7 @@ pub struct User {
 }
 
 impl DeezerObject for User {
-    fn get_api_url(id: u64) -> String {
+    fn get_by_id(id: u64) -> String {
         format!("user/{}", id)
     }
 }

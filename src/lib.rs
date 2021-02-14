@@ -10,8 +10,12 @@
 mod client;
 mod error;
 pub mod models;
+mod search;
+mod clients;
 
 pub use self::client::DeezerClient;
 pub use self::error::DeezerError;
+pub use self::search::*;
+pub use self::clients::*;
 
 pub(crate) type Result<T> = std::result::Result<T, DeezerError>;

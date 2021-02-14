@@ -6,12 +6,13 @@ use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 
 use crate::models::*;
+use crate::clients::*;
 use crate::Result;
 
 const BASE_URL: &str = "https://api.deezer.com";
 
 /// Entrypoint to interact with all deezer apis
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct DeezerClient {
     client: reqwest::Client,
 }
@@ -19,9 +20,14 @@ pub struct DeezerClient {
 impl DeezerClient {
     /// Create a new unauthenticated client instance
     pub fn new() -> Self {
-        DeezerClient {
-            client: reqwest::Client::new(),
-        }
+        Default::default()
+    }
+
+    /// Returns a client to explore the albums api
+    ///
+    /// [Deezer Api Documentation](https://developers.deezer.com/api/album)
+    pub fn albums(&self) -> AlbumsClient {
+        AlbumsClient::new(self.clone())
     }
 
     /// Returns the [`Album`] with the given id.
@@ -31,26 +37,11 @@ impl DeezerClient {
         self.get_entity(id).await
     }
 
-    /// Returns the [`Album`] with the given upc.
-    ///
-    /// [Deezer Api Documentation](https://developers.deezer.com/api/album)
-    pub async fn album_by_upc(&self, upc: Upc) -> Result<Option<Album>> {
-        self.get_entity_by_upc(upc).await
-    }
-
     /// Returns the [`Artist`] with the given id.
     ///
     /// [Deezer Api Documentation](https://developers.deezer.com/api/artist)
     pub async fn artist(&self, id: u64) -> Result<Option<Artist>> {
         self.get_entity(id).await
-    }
-
-    /// Returns the [`Album`] for Artist with the given id.
-    ///
-    /// [Deezer Api Documentation](https://developers.deezer.com/api/artist/albums)
-    pub async fn artist_albums(&self, id: u64, limit: Option<u32>,
-                               offset: Option<u32>) -> Result<Vec<ArtistAlbum>> {
-         self.get_subresource(id, limit, offset).await
     }
 
     /// Returns the [`Comment`] with the given id.
@@ -127,30 +118,37 @@ impl DeezerClient {
     ///
     /// [Deezer Api Documentation](https://developers.deezer.com/api/infos)
     pub async fn api_info(&self) -> Result<Infos> {
-        let url = format!("{}/infos", BASE_URL);
-        self.get(&url).await
+        self.get("infos").await
     }
 
     /// Returns charts of a specified genre
     ///
     /// [Deezer Api Documentation](https://developers.deezer.com/api/chart)
     pub async fn charts(&self) -> Result<Chart> {
-        let url = format!("{}/chart", BASE_URL);
-        self.get(&url).await
+        self.get("chart").await
     }
 
     /// Returns the user's options
     ///
     /// [Deezer Api Documentation](https://developers.deezer.com/api/options)
     pub async fn user_options(&self) -> Result<Options> {
-        let url = format!("{}/options", BASE_URL);
-        self.get(&url).await
+        self.get("options").await
     }
 
-    pub(crate) async fn get_entity_from_url<T>(&self, url:String) -> Result<Option<T>>
+    pub(crate) async fn get_entity<T>(&self, id: u64) -> Result<Option<T>>
+    where
+        T: DeezerObject,
+    {
+        let url = T::get_by_id(id);
+
+        self.get_entity_from_url(url).await
+    }
+
+    pub(crate) async fn get_entity_from_url<T>(&self, url: String) -> Result<Option<T>>
         where
             T: DeserializeOwned,
     {
+        let url = format!("{}/{}", BASE_URL, url);
         let res = self.client.get(&url).send().await?;
         if res.status() == StatusCode::NOT_FOUND {
             return Ok(None);
@@ -160,63 +158,71 @@ impl DeezerClient {
         Ok(Some(body))
     }
 
-    pub(crate) async fn get_entity<T>(&self, id: u64) -> Result<Option<T>>
-    where
-        T: DeezerObject,
-    {
-        let url = T::get_api_url(id);
-        let url = format!("{}/{}", BASE_URL, url);
-
-        self.get_entity_from_url(url).await
-    }
-
-    pub(crate) async fn get_entity_by_upc<T>(&self, upc: Upc) -> Result<Option<T>>
-        where
-            T: DeezerUpcObject,
-    {
-        let url = T::get_api_url(upc);
-        let url = format!("{}/{}", BASE_URL, url);
-
-        self.get_entity_from_url(url).await
-    }
-
     pub(crate) async fn get_all<T>(&self) -> Result<Vec<T>>
     where
         T: DeezerEnumerable,
     {
         let url = T::get_all_api_url();
-        let url = format!("{}/{}", BASE_URL, url);
 
         let res: DeezerArray<T> = self.get(&url).await?;
 
         Ok(res.data)
     }
 
-    pub(crate) async fn get_subresource<T>(&self, id: u64, limit: Option<u32>,
-                                           offset: Option<u32>) -> Result<Vec<T>>
+    pub(crate) async fn get_array_params<T>(&self, url: &str, query_params: &HashMap<String, String>) -> Result<Vec<T>>
         where
-            T: DeezerObject
+            T: DeserializeOwned,
     {
-        let url = T::get_api_url(id);
-        let url = format!("{}/{}", BASE_URL, url);
-
-        let mut params: HashMap<String, String> = HashMap::new();
-        if let Some(limit) = limit {
-            params.insert("limit".to_owned(), limit.to_string());
-        }
-        if let Some(offset) = offset {
-            params.insert("offset".to_owned(), offset.to_string());
-        }
-
-        let res: DeezerArray<T> = self.get_with_params(&url, &params).await?;
+        let res: DeezerArray<T> = self.get_with_params(url, query_params).await?;
 
         Ok(res.data)
     }
 
+    pub(crate) async fn get_connection<T, C>(&self, identifier: &str) -> Result<Vec<C>>
+        where
+            T: DeezerConnection<C>,
+            C: DeserializeOwned,
+    {
+        let url = T::get_connection_url(identifier);
+
+        let res: DeezerArray<C> = self.get(&url).await?;
+
+        Ok(res.data)
+    }
+
+    pub(crate) async fn _get_connection<T, C, L: Into<Option<u32>>, O: Into<Option<u32>>>(&self, identifier: &str, limit: L,
+                                                                                         offset: O) -> Result<Vec<C>>
+        where
+            T: DeezerConnection<C>,
+            C: DeezerObject {
+        let url = T::get_connection_url(identifier);
+
+        let mut params: HashMap<String, String> = HashMap::new();
+        if let Some(limit) = limit.into() {
+            params.insert("limit".to_owned(), limit.to_string());
+        }
+        if let Some(offset) = offset.into() {
+            params.insert("offset".to_owned(), offset.to_string());
+        }
+
+        let res: DeezerArray<C> = self.get_with_params(&url, &params).await?;
+
+        Ok(res.data)
+    }
+
+    async fn get_with_params<T: DeserializeOwned>(&self, url: &str, query_params: &HashMap<String, String>) -> Result<T> {
+        self.get_with_optional_params(url, Some(query_params)).await
+    }
+
+    async fn get<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
+        self.get_with_optional_params(url, None).await
+    }
+
     async fn get_with_optional_params<T: DeserializeOwned>(&self, url: &str, query_params: Option<&HashMap<String, String>>) -> Result<T> {
+        let url = format!("{}/{}", BASE_URL, url);
         let mut request_builder = self
             .client
-            .get(url);
+            .get(&url);
         if let Some(params) = query_params {
             request_builder = request_builder.query(params);
         }
@@ -230,13 +236,4 @@ impl DeezerClient {
 
         Ok(res)
     }
-
-    async fn get_with_params<T: DeserializeOwned>(&self, url: &str, query_params: &HashMap<String, String>) -> Result<T> {
-        self.get_with_optional_params(url, Some(query_params)).await
-    }
-
-    async fn get<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
-        self.get_with_optional_params(url, None).await
-    }
-
 }

@@ -3,7 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::models::{Album, DeezerObject};
+use crate::models::{Album, DeezerObject, DeezerConnection};
 use crate::Result;
 
 /// Contains all the information provided for an Artist.
@@ -86,8 +86,18 @@ pub struct Artist {
 }
 
 impl DeezerObject for Artist {
-    fn get_api_url(id: u64) -> String {
+    fn get_by_id(id: u64) -> String {
         format!("artist/{}", id)
+    }
+}
+
+impl DeezerConnection<ArtistAlbum> for Artist {
+    fn get_connection_url(identifier: &str) -> String {
+        format!("artist/{}/albums", identifier)
+    }
+
+    fn get_url(&self) -> String {
+        format!("artist/{}/albums", self.id)
     }
 }
 
@@ -191,7 +201,7 @@ pub struct ArtistAlbum {
 }
 
 impl DeezerObject for ArtistAlbum {
-    fn get_api_url(id: u64) -> String {
+    fn get_by_id(id: u64) -> String {
         format!("artist/{}/albums", id)
     }
 }

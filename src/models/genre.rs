@@ -87,7 +87,7 @@ pub struct Genre {
 }
 
 impl DeezerObject for Genre {
-    fn get_api_url(id: u64) -> String {
+    fn get_by_id(id: u64) -> String {
         format!("genre/{}", id)
     }
 }

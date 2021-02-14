@@ -101,7 +101,7 @@ pub struct Radio {
 }
 
 impl DeezerObject for Radio {
-    fn get_api_url(id: u64) -> String {
+    fn get_by_id(id: u64) -> String {
         format!("radio/{}", id)
     }
 }

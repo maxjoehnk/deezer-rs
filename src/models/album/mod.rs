@@ -3,8 +3,20 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::models::{Artist, ContributorArtist, DeezerArray, DeezerObject, DeezerUpcObject, Genre, Track, Upc};
+use crate::models::{Artist, ContributorArtist, DeezerArray, DeezerObject, Genre, Track};
+use crate::search::{Searchable, SearchResource};
 use crate::Result;
+
+#[doc(inline)]
+pub use self::comments::*;
+#[doc(inline)]
+pub use self::fans::*;
+#[doc(inline)]
+pub use self::tracks::*;
+
+mod comments;
+mod fans;
+mod tracks;
 
 /// Contains all the information provided for an Album.
 ///
@@ -129,14 +141,14 @@ pub struct Album {
 }
 
 impl DeezerObject for Album {
-    fn get_api_url(id: u64) -> String {
+    fn get_by_id(id: u64) -> String {
         format!("album/{}", id)
     }
 }
 
-impl DeezerUpcObject for Album {
-    fn get_api_url(upc: Upc) -> String {
-        format!("album/upc:{}", upc)
+impl Searchable for Album {
+    fn resource() -> SearchResource {
+        SearchResource::Albums
     }
 }
 
